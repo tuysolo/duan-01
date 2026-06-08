@@ -208,7 +208,7 @@ export default function Home() {
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">FAM Trading Content Tool</h1>
+            <h1 className="text-2xl font-bold text-white mb-1">INC Content Tool</h1>
             <p className="text-gray-400 text-sm">Tạo kịch bản YouTube Crypto theo phong cách từng creator</p>
           </div>
           {history.length > 0 && (

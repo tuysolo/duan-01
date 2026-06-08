@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FAM Trading Content Tool",
+  title: "INC Content Tool",
   description: "Tạo kịch bản YouTube Crypto theo phong cách từng creator",
 };
 
