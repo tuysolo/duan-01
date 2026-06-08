@@ -1,8 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 const CREATOR_PROFILES: Record<string, string> = {
   Hien: `Phong cách viết kịch bản của HIEN (Eric):
 - Xưng: "Eric" (nhất quán, KHÔNG dùng "mình")
@@ -63,7 +61,13 @@ YÊU CẦU BẮT BUỘC cho kịch bản:
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { step, creator, topic, referenceVideos, keywords, title, timeline, additionalContext } = body;
+    const { step, creator, topic, referenceVideos, keywords, title, timeline, additionalContext, apiKey } = body;
+
+    if (!apiKey || !apiKey.startsWith("sk-ant-")) {
+      return NextResponse.json({ error: "API key không hợp lệ. Vui lòng nhập Anthropic API key hợp lệ." }, { status: 401 });
+    }
+
+    const client = new Anthropic({ apiKey });
 
     const profile = CREATOR_PROFILES[creator];
     if (!profile) {
@@ -166,7 +170,7 @@ Sau bảng kịch bản, thêm phần:
       return NextResponse.json({ error: "Step không hợp lệ" }, { status: 400 });
     }
 
-    const message = await client.messages.create({
+    const message = await (client as Anthropic).messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 8192,
       messages: [{ role: "user", content: prompt }],

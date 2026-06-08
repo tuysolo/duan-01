@@ -39,7 +39,7 @@ const CREATORS: { id: Creator; name: string; emoji: string; desc: string }[] = [
   { id: "Trang", name: "Trang", emoji: "🎬", desc: "Storytelling, visual mạnh, bóc tách sự thật" },
 ];
 
-const STEPS = ["Chọn Creator", "Chủ đề & Input", "Keyword & Tiêu đề", "Timeline", "Kịch bản"];
+const STEPS = ["API Key", "Chọn Creator", "Chủ đề & Input", "Keyword & Tiêu đề", "Timeline", "Kịch bản"];
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -84,6 +84,8 @@ function CopyButton({ text }: { text: string }) {
 
 export default function Home() {
   const [step, setStep] = useState(0);
+  const [apiKey, setApiKey] = useState("");
+  const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [creator, setCreator] = useState<Creator | null>(null);
   const [topic, setTopic] = useState("");
   const [referenceVideos, setReferenceVideos] = useState("");
@@ -109,9 +111,12 @@ export default function Home() {
     const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, apiKey }),
     });
-    if (!res.ok) throw new Error("Lỗi API");
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Lỗi API");
+    }
     return res.json();
   };
 
@@ -127,7 +132,7 @@ export default function Home() {
       } else {
         setKeywordRaw(data.raw || data.result);
       }
-      setStep(2);
+      setStep(3);
     } catch {
       setError("Lỗi generate keyword. Kiểm tra API key.");
     }
@@ -149,7 +154,7 @@ export default function Home() {
       } else {
         setTimelineRaw(data.raw || data.result);
       }
-      setStep(3);
+      setStep(4);
     } catch {
       setError("Lỗi generate timeline.");
     }
@@ -177,7 +182,7 @@ export default function Home() {
         script,
         createdAt: new Date(),
       }, ...prev]);
-      setStep(4);
+      setStep(5);
     } catch {
       setError("Lỗi generate kịch bản.");
     }
@@ -232,7 +237,7 @@ export default function Home() {
                   </div>
                   <div className="flex gap-1.5 shrink-0">
                     <button
-                      onClick={() => { setScriptResult(item.script); setShowHistory(false); setStep(4); }}
+                      onClick={() => { setScriptResult(item.script); setShowHistory(false); setStep(5); }}
                       className="text-xs px-2 py-1 bg-blue-800 hover:bg-blue-700 text-blue-200 rounded transition-colors"
                     >
                       Xem
@@ -264,8 +269,53 @@ export default function Home() {
           </div>
         )}
 
-        {/* Step 0: Chọn Creator */}
+        {/* Step 0: API Key */}
         {step === 0 && (
+          <div className="max-w-lg">
+            <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6">
+              <div className="text-3xl mb-3">🔑</div>
+              <h2 className="text-lg font-semibold text-white mb-1">Nhập Anthropic API Key</h2>
+              <p className="text-sm text-gray-400 mb-5">
+                API key được dùng trực tiếp từ trình duyệt của bạn — không lưu trên server.{" "}
+                Lấy key tại{" "}
+                <span className="text-blue-400">console.anthropic.com</span>
+              </p>
+              <div className="relative">
+                <input
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                  type={apiKeyVisible ? "text" : "password"}
+                  placeholder="sk-ant-api03-..."
+                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 text-sm font-mono pr-20"
+                />
+                <button
+                  onClick={() => setApiKeyVisible(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-200 px-1"
+                >
+                  {apiKeyVisible ? "Ẩn" : "Hiện"}
+                </button>
+              </div>
+              {apiKey && !apiKey.startsWith("sk-ant-") && (
+                <p className="text-xs text-red-400 mt-2">⚠️ Key phải bắt đầu bằng sk-ant-</p>
+              )}
+              <div className="mt-5 p-3 bg-yellow-950/40 border border-yellow-800/50 rounded-lg">
+                <p className="text-xs text-yellow-300/80">
+                  🔒 Key chỉ tồn tại trong session này, không được lưu hay gửi đi đâu ngoài Anthropic API.
+                </p>
+              </div>
+              <button
+                disabled={!apiKey.startsWith("sk-ant-")}
+                onClick={() => setStep(1)}
+                className="mt-5 w-full py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+              >
+                Bắt đầu →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 1: Chọn Creator */}
+        {step === 1 && (
           <div>
             <h2 className="text-lg font-semibold mb-4 text-gray-200">Chọn Content Creator</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -297,8 +347,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Step 1: Input */}
-        {step === 1 && (
+        {/* Step 2: Input */}
+        {step === 2 && (
           <div>
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">{CREATORS.find(c => c.id === creator)?.emoji}</span>
@@ -342,7 +392,7 @@ export default function Home() {
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(0)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-colors">
+              <button onClick={() => setStep(2)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-colors">
                 ← Quay lại
               </button>
               <button
@@ -357,8 +407,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Step 2: Keyword & Tiêu đề */}
-        {step === 2 && (
+        {/* Step 3: Keyword & Tiêu đề */}
+        {step === 3 && (
           <div>
             <h2 className="text-lg font-semibold mb-4 text-gray-200">Keyword & Tiêu đề</h2>
 
@@ -456,7 +506,7 @@ export default function Home() {
             )}
 
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(1)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm">
+              <button onClick={() => setStep(3)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm">
                 ← Quay lại
               </button>
               <button
@@ -471,8 +521,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Step 3: Timeline */}
-        {step === 3 && (
+        {/* Step 4: Timeline */}
+        {step === 4 && (
           <div>
             <h2 className="text-lg font-semibold mb-1 text-gray-200">Timeline Video</h2>
             <div className="text-sm text-gray-500 mb-4">
@@ -509,7 +559,7 @@ export default function Home() {
             )}
 
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(2)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm">
+              <button onClick={() => setStep(4)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm">
                 ← Quay lại
               </button>
               <button
@@ -524,8 +574,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Step 4: Kịch bản */}
-        {step === 4 && (
+        {/* Step 5: Kịch bản */}
+        {step === 5 && (
           <div>
             <div className="flex items-start justify-between mb-4 gap-3">
               <div>
@@ -557,7 +607,7 @@ export default function Home() {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(3)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm">
+              <button onClick={() => setStep(4)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm">
                 ← Quay lại
               </button>
               <button
@@ -569,7 +619,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => {
-                  setStep(0);
+                  setStep(1);
                   setCreator(null);
                   setTopic(""); setReferenceVideos(""); setAdditionalContext("");
                   setKeywordResult(null); setSelectedMainKw([]); setSelectedSubKw([]);
@@ -585,8 +635,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Summary sidebar for steps 2-4 */}
-        {step >= 2 && step < 4 && selectedMainKw.length > 0 && (
+        {/* Summary sidebar for steps 3-5 */}
+        {step >= 3 && step < 5 && selectedMainKw.length > 0 && (
           <div className="mt-6 bg-gray-900 border border-gray-700 rounded-xl p-4">
             <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Đã chọn</h4>
             <div className="flex flex-wrap gap-1.5">
