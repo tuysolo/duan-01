@@ -48,7 +48,7 @@ Phân tích phong cách viết kịch bản của 4 content creator từ ~80 k�
 
 ### Deploy:
 - GitHub: https://github.com/trungtuy292/duan-01
-- Vercel: *(cập nhật sau khi deploy)*
+- Vercel: https://app-eight-beta-94.vercel.app
 
 ---
 
