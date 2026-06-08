@@ -506,7 +506,7 @@ export default function Home() {
             )}
 
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(3)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm">
+              <button onClick={() => setStep(2)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm">
                 ← Quay lại
               </button>
               <button
@@ -559,7 +559,7 @@ export default function Home() {
             )}
 
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(4)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm">
+              <button onClick={() => setStep(3)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm">
                 ← Quay lại
               </button>
               <button
