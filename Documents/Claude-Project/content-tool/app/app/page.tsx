@@ -338,7 +338,7 @@ export default function Home() {
             <div className="mt-6">
               <button
                 disabled={!creator}
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
               >
                 Tiếp theo →
@@ -392,7 +392,7 @@ export default function Home() {
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(2)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-colors">
+              <button onClick={() => setStep(1)} className="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-colors">
                 ← Quay lại
               </button>
               <button
