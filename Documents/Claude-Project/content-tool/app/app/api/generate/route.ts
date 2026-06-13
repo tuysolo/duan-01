@@ -48,14 +48,14 @@ const CREATOR_PROFILES: Record<string, string> = {
 const SCRIPT_REQUIREMENTS = `
 YÊU CẦU BẮT BUỘC cho kịch bản:
 1. Phải hook mạnh trong 30 giây đầu — người xem quyết định xem tiếp hay không
-2. Phần đầu (phần 1 hoặc 2): có đoạn liên kết với video khác của kênh + call-to-action (like, subscribe, comment)
-3. Kết video: tổng hợp nội dung chính + tuyên bố từ chối trách nhiệm (disclaimer) + CTA rõ ràng
+2. Phần 1 hoặc 2: có đoạn liên kết với video khác của kênh (giới thiệu tự nhiên, KHÔNG phải CTA subscribe)
+3. Kết video (phần cuối cùng): tổng hợp nội dung chính → tuyên bố từ chối trách nhiệm (disclaimer) → CTA đầy đủ: like, subscribe, comment — ĐÂY LÀ VỊ TRÍ DUY NHẤT có CTA like/sub/comment
 4. Liên kết giữa các phần: cuối mỗi phần có 1-2 câu dẫn dắt sang phần tiếp theo để giữ người xem
 5. Content 100% chứa các keyword (mỗi keyword xuất hiện ít nhất 1 lần), phân bổ đều
 6. Keyword viết chính xác (đúng hoa thường như trong danh sách)
-7. Độ dài: ~4000 ký tự (tương đương video 15 phút)
+7. Độ dài CỘT THOẠI (cột 1): tối thiểu 4000 TỪ — tính riêng phần thoại, KHÔNG tính cột mô tả và cột source. Đây tương đương video 15 phút. Hãy viết đủ chiều sâu, phân tích nguyên nhân–hệ quả–tác động, KHÔNG chỉ liệt kê số liệu.
 8. Văn phong tự nhiên, KHÔNG giống AI
-9. Kịch bản format 2 cột: THOẠI | MÔ TẢ EDITOR
+9. Kịch bản format 3 cột: THOẠI | MÔ TẢ HOẠT CẢNH/HIỆU ỨNG | TRÍCH DẪN SOURCE
 `;
 
 export async function POST(req: NextRequest) {
@@ -87,14 +87,15 @@ ${additionalContext ? `THÔNG TIN BỔ SUNG: ${additionalContext}` : ""}
 
 Hãy đề xuất keyword và tiêu đề cho video này theo tiêu chí:
 
-KEYWORD CHÍNH (2 keyword):
-- 1 keyword core Crypto có volume tìm kiếm cao
-- 1 keyword liên quan chủ đề video (volume >3000)
-- Cả 2 phải có: volume >3000, độ cạnh tranh Low, điểm tổng quát >60
+KEYWORD CHÍNH (tối thiểu 1 keyword):
+- Tìm 1 keyword chính liên quan trực tiếp đến chủ đề video, volume >3000, độ cạnh tranh Low, điểm tổng quát >60
+- Ưu tiên keyword tiếng Việt có volume thực tế trên YouTube Việt Nam (VD: "bitcoin 2026", "ethereum tăng", "crypto sập") — KHÔNG dùng bản dịch tiếng Anh
+- Nếu keyword chính có volume thấp (<3000), bổ sung thêm 1 keyword core liên quan thị trường Crypto chung để đưa vào tiêu đề
 - Keyword khó/cạnh tranh cao → ưu tiên đặt bên trái đầu tiêu đề
 
 KEYWORD PHỤ (10+ keyword):
 - Liên quan chủ đề video, volume càng cao càng tốt, điểm tổng quát >60
+- Ưu tiên keyword tiếng Việt, chỉ dùng tiếng Anh khi thuật ngữ đó phổ biến hơn tiếng Việt (VD: "DeFi", "NFT", "ETF")
 
 TIÊU ĐỀ VIDEO (2-3 gợi ý):
 - Dưới 70 ký tự, tối ưu 60 ký tự
@@ -150,11 +151,15 @@ ${timeline?.map((t: {part: number; title: string; keyPoints: string[]}) => `- Ph
 ${referenceVideos ? `VIDEO THAM KHẢO: ${referenceVideos}` : ""}
 ${additionalContext ? `NỘI DUNG THAM KHẢO: ${additionalContext}` : ""}
 
-Viết kịch bản HOÀN CHỈNH theo phong cách của ${creator}. Format output là markdown table 2 cột:
+Viết kịch bản HOÀN CHỈNH theo phong cách của ${creator}.
 
-| THOẠI | MÔ TẢ EDITOR |
-|-------|--------------|
-| (nội dung thoại) | (hướng dẫn hiệu ứng, hình ảnh cho editor) |
+QUAN TRỌNG VỀ ĐỘ DÀI: Cột THOẠI phải đạt tối thiểu 4000 từ tổng cộng. Hãy viết chi tiết, phân tích sâu từng điểm trong timeline, không rút gọn.
+
+Format output là markdown table 3 cột:
+
+| THOẠI | MÔ TẢ HOẠT CẢNH/HIỆU ỨNG | TRÍCH DẪN SOURCE |
+|-------|--------------------------|-----------------|
+| (nội dung thoại đầy đủ) | (hướng dẫn hiệu ứng, hình ảnh cho editor) | (nguồn dữ liệu, link tham khảo nếu có) |
 
 Ghi chú MÔ TẢ EDITOR theo phong cách ${creator}:
 ${creator === "Hien" ? "- Ký hiệu: qq1.png, bl2.mp4... Lệnh: vid, ảnh, popup text, bôi màu, zoom, khoanh" : ""}
@@ -172,7 +177,7 @@ Sau bảng kịch bản, thêm phần:
 
     const message = await (client as Anthropic).messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 8192,
+      max_tokens: 16000,
       messages: [{ role: "user", content: prompt }],
     });
 

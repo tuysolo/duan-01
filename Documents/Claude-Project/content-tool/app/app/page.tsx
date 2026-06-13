@@ -96,6 +96,7 @@ export default function Home() {
   const [keywordResult, setKeywordResult] = useState<KeywordResult | null>(null);
   const [selectedMainKw, setSelectedMainKw] = useState<string[]>([]);
   const [selectedSubKw, setSelectedSubKw] = useState<string[]>([]);
+  const [customKwInput, setCustomKwInput] = useState("");
   const [selectedTitle, setSelectedTitle] = useState("");
   const [customTitle, setCustomTitle] = useState("");
   const [keywordRaw, setKeywordRaw] = useState("");
@@ -463,6 +464,48 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* Custom keyword input */}
+                <div className="bg-gray-900 rounded-xl border border-gray-700 p-4">
+                  <h3 className="text-sm font-semibold text-blue-400 mb-3">THÊM KEYWORD THỦ CÔNG</h3>
+                  <p className="text-xs text-gray-500 mb-2">Nhập keyword rồi nhấn Enter hoặc nút + để thêm vào danh sách keyword phụ</p>
+                  <div className="flex gap-2">
+                    <input
+                      value={customKwInput}
+                      onChange={e => setCustomKwInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && customKwInput.trim()) {
+                          const kw = customKwInput.trim();
+                          if (!selectedSubKw.includes(kw)) setSelectedSubKw(prev => [...prev, kw]);
+                          setCustomKwInput("");
+                        }
+                      }}
+                      placeholder="VD: bitcoin tăng 2026, ethereum hôm nay..."
+                      className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 placeholder-gray-600"
+                    />
+                    <button
+                      onClick={() => {
+                        const kw = customKwInput.trim();
+                        if (kw && !selectedSubKw.includes(kw)) setSelectedSubKw(prev => [...prev, kw]);
+                        setCustomKwInput("");
+                      }}
+                      disabled={!customKwInput.trim()}
+                      className="px-3 py-2 bg-blue-700 hover:bg-blue-600 disabled:opacity-40 text-white rounded text-sm font-medium transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {selectedSubKw.filter(k => !keywordResult?.subKeywords?.includes(k)).length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {selectedSubKw.filter(k => !keywordResult?.subKeywords?.includes(k)).map(k => (
+                        <span key={k} className="inline-flex items-center gap-1 text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded">
+                          {k}
+                          <button onClick={() => setSelectedSubKw(prev => prev.filter(x => x !== k))} className="text-green-500 hover:text-green-200 ml-0.5">×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Tiêu đề */}
                 <div className="bg-gray-900 rounded-xl border border-gray-700 p-4">
                   <h3 className="text-sm font-semibold text-blue-400 mb-3">TIÊU ĐỀ GỢI Ý</h3>
@@ -622,7 +665,7 @@ export default function Home() {
                   setStep(1);
                   setCreator(null);
                   setTopic(""); setReferenceVideos(""); setAdditionalContext("");
-                  setKeywordResult(null); setSelectedMainKw([]); setSelectedSubKw([]);
+                  setKeywordResult(null); setSelectedMainKw([]); setSelectedSubKw([]); setCustomKwInput("");
                   setSelectedTitle(""); setCustomTitle("");
                   setTimelineResult(null); setScriptResult("");
                 }}
