@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type Creator = "Hien" | "Loc" | "Nhi" | "Trang";
 
@@ -105,8 +105,25 @@ export default function Home() {
   const [timelineRaw, setTimelineRaw] = useState("");
 
   const [scriptResult, setScriptResult] = useState("");
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem("inc-history");
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      return parsed.map((h: Omit<HistoryItem, "createdAt"> & { createdAt: string }) => ({
+        ...h,
+        createdAt: new Date(h.createdAt),
+      }));
+    } catch {
+      return [];
+    }
+  });
   const [showHistory, setShowHistory] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("inc-history", JSON.stringify(history));
+  }, [history]);
 
   const call = async (payload: object) => {
     const res = await fetch("/api/generate", {
@@ -203,6 +220,21 @@ export default function Home() {
   const slugify = (str: string) =>
     str.toLowerCase().replace(/[^a-z0-9À-ỹ]+/gi, "-").replace(/^-|-$/g, "").substring(0, 50);
 
+  const exportTsv = (content: string, filename: string) => {
+    const lines = content.split("\n").filter(l => l.trim().startsWith("|") && !l.match(/^\|[-| ]+\|$/));
+    const tsv = lines.map(l =>
+      l.split("|").slice(1, -1).map(cell => cell.trim().replace(/\t/g, " ")).join("\t")
+    ).join("\n");
+    downloadFile(tsv, filename, "text/tab-separated-values");
+  };
+
+  const clearHistory = () => {
+    if (confirm("Xóa toàn bộ lịch sử?")) {
+      setHistory([]);
+      localStorage.removeItem("inc-history");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0f0f13] text-gray-100">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -226,14 +258,17 @@ export default function Home() {
         {/* History panel */}
         {showHistory && history.length > 0 && (
           <div className="mb-6 bg-gray-900 border border-gray-700 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-gray-300 mb-3">Lịch sử kịch bản đã tạo</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-300">Lịch sử kịch bản đã tạo</h3>
+              <button onClick={clearHistory} className="text-xs text-red-500 hover:text-red-400 transition-colors">Xóa tất cả</button>
+            </div>
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {history.map((item) => (
                 <div key={item.id} className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2 gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-white truncate">{item.title}</div>
                     <div className="text-xs text-gray-500 mt-0.5">
-                      {item.creator} · {item.createdAt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                      {item.creator} · {item.createdAt.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })} {item.createdAt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
                   <div className="flex gap-1.5 shrink-0">
@@ -254,6 +289,12 @@ export default function Home() {
                       className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
                     >
                       .txt
+                    </button>
+                    <button
+                      onClick={() => exportTsv(item.script, `kich-ban-${slugify(item.title)}.tsv`)}
+                      className="text-xs px-2 py-1 bg-green-900 hover:bg-green-800 text-green-300 rounded transition-colors"
+                    >
+                      .tsv
                     </button>
                   </div>
                 </div>
@@ -628,19 +669,26 @@ export default function Home() {
                   Tiêu đề: <span className="text-blue-400">{customTitle || selectedTitle}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                 <CopyButton text={scriptResult} />
                 <button
                   onClick={() => downloadFile(scriptResult, `kich-ban-${slugify(customTitle || selectedTitle)}.md`, "text/markdown")}
-                  className="text-xs px-2.5 py-1.5 bg-green-900 hover:bg-green-800 text-green-300 rounded-lg transition-colors font-medium"
+                  className="text-xs px-2.5 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors font-medium"
                 >
                   ↓ .md
                 </button>
                 <button
                   onClick={() => downloadFile(scriptResult, `kich-ban-${slugify(customTitle || selectedTitle)}.txt`, "text/plain")}
-                  className="text-xs px-2.5 py-1.5 bg-blue-900 hover:bg-blue-800 text-blue-300 rounded-lg transition-colors font-medium"
+                  className="text-xs px-2.5 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors font-medium"
                 >
                   ↓ .txt
+                </button>
+                <button
+                  onClick={() => exportTsv(scriptResult, `kich-ban-${slugify(customTitle || selectedTitle)}.tsv`)}
+                  className="text-xs px-2.5 py-1.5 bg-green-900 hover:bg-green-800 text-green-300 rounded-lg transition-colors font-medium"
+                  title="Import vào Google Sheets"
+                >
+                  ↓ .tsv (Sheets)
                 </button>
               </div>
             </div>
